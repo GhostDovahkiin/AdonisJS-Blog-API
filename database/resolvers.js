@@ -32,4 +32,60 @@ const resolvers = {
       return post.toJSON()
     }
   },
+  Mutation: {
+    // Handles user login
+    async login(_, {
+      email,
+      password
+    }, {
+      auth
+    }) {
+      const {
+        token
+      } = await auth.attempt(email, password)
+      return token
+    },
+
+    // Create new user
+    async createUser(_, {
+      username,
+      email,
+      password
+    }) {
+      return await User.create({
+        username,
+        email,
+        password
+      })
+    },
+
+    // Add a new post
+    async addPost(_, {
+      title,
+      content
+    }, {
+      auth
+    }) {
+      try {
+        // Check if user is logged in
+        await auth.check()
+
+        // Get the authenticated user
+        const user = await auth.getUser()
+
+        // Add new post
+        return await Post.create({
+          user_id: user.id,
+          title,
+          slug: slugify(title, {
+            lower: true
+          }),
+          content
+        })
+      } catch (error) {
+        // Throw error if user is not authenticated
+        throw new Error('Missing or invalid jwt token')
+      }
+    }
+  },
 }
